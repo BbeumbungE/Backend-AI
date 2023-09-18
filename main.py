@@ -2,6 +2,7 @@ import json
 from boto3 import client
 from botocore.exceptions import NoCredentialsError
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from aio_pika import connect, IncomingMessage, Message
 from dotenv import load_dotenv
 import os
@@ -19,6 +20,14 @@ import time
 # https://velog.io/@cho876/%EC%9A%94%EC%A6%98-%EB%9C%A8%EA%B3%A0%EC%9E%88%EB%8B%A4%EB%8A%94-FastAPI
 # uvicorn main:app --reload
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # cartoon_set generator
 cartoon_set_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"cartoon_set_generator")
@@ -136,19 +145,30 @@ async def on_message(message: IncomingMessage):
 async def read_root():
     return {"Hello": "World"}
 
-# @app.get("/temp")
-# async def temp():
-#     result = np.zeros((256, 256, 3), dtype=np.uint8)
-#     result[:, :, 0] = 255
+@app.get("/temp")
+async def temp():
+    start = time.time()
+    
+    for i in range(1, 7):
+        # preprocess edge
+        edge_img = tf.io.decode_image(tf.io.read_file(f"./test_edges/bmw/sketch{i}.jpg"), channels=1)
+        edge_img = preprocess_edge(edge_img)
 
-#     result = Image.fromarray(result)
-#     file = BytesIO()
-#     result.save(file, 'JPEG')
-#     file.seek(0)
-#     s3.upload_fileobj(file, os.getenv('AWS_BUCKET_NAME'), "profile/tmp.JPG")
-#     file.close()
+        # run the generator & postprocess the result
+        result = panda_generator(edge_img)
+        result = postprocess_result(result)
 
-#     return "success"
+        img = np.array(result).astype(np.uint8)
+        img = Image.fromarray(np.array(img))
+        img.save(f"./test_results/bmw/result{i}.jpg")
+
+    end = time.time()
+
+    print(f"{end - start:.5f} sec")
+
+    return f"Hello World {panda_generator._name}"
+
+    return "success"
 
 @app.post("/upload/")
 async def create_upload_file(file: UploadFile):
