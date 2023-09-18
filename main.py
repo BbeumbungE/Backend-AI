@@ -85,7 +85,7 @@ async def on_message(message: IncomingMessage):
         
         # # 파일 경로 생성
         file_name = f"{subject}_{int(time.time())}"
-        file_path = f'profile/{profile_id}/canvas/{subject}/밤이.JPG'
+        file_path = f'profile/{profile_id}/canvas/{subject}/{time.time_ns()}.JPG'
 
         ######## 변환 코드 들어갈 부분 ########
         sketch_response = requests.get(sketch_url)
@@ -108,9 +108,9 @@ async def on_message(message: IncomingMessage):
             result = postprocess_result(result)
 
             # S3에 업로드
-            result = Image.fromarray(np.array(result))
+            result = Image.fromarray(np.array(result).astype(np.uint8))
             file = BytesIO()
-            result.save(file, 'JPG')
+            result.save(file, 'JPEG')
             file.seek(0)
             s3.upload_fileobj(file, os.getenv('AWS_BUCKET_NAME'), file_path)
             file.close()
