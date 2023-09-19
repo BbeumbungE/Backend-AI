@@ -9,7 +9,7 @@ import os
 import tensorflow as tf
 import tensorflow_addons as tfa
 from models import Residual_Block, Pix2Pix_Generator
-from utils import preprocess_edge, postprocess_result
+from utils import preprocess_edge, postprocess_result, load_and_preprocess_edge, load_model
 import numpy as np
 from PIL import Image
 import requests
@@ -29,20 +29,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# cartoon_set generator
-cartoon_set_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"cartoon_set_generator")
-cartoon_set_ckpt = tf.train.Checkpoint(generator=cartoon_set_generator)
-cartoon_set_ckpt.restore("./checkpoints/cartoon_set/ckpt-1")  # trained for 28 epoches (with batch_size = 4) using 9996 images
+# # cartoon_set generator
+# cartoon_set_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"cartoon_set_generator")
+# cartoon_set_ckpt = tf.train.Checkpoint(generator=cartoon_set_generator)
+# cartoon_set_ckpt.restore("./checkpoints/cartoon_set/ckpt-1")  
 
-# panda generator
-panda_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"panda_generator")
-panda_ckpt = tf.train.Checkpoint(generator=panda_generator)
-panda_ckpt.restore("./checkpoints/panda/ckpt-1")  # trained for 180 epoches (with batch_size = 1) using 300 images
+# # panda generator
+# panda_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"panda_generator")
+# panda_ckpt = tf.train.Checkpoint(generator=panda_generator)
+# panda_ckpt.restore("./checkpoints/panda/ckpt-1")  
 
-# bmw generator
-bmw_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"bmw_generator")
-bmw_ckpt = tf.train.Checkpoint(generator=bmw_generator)
-bmw_ckpt.restore("./checkpoints/bmw/ckpt-1")  # trained for 19 epoches (with batch_size = 4) using 11476 images
+# # bmw generator
+# bmw_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"bmw_generator")
+# bmw_ckpt = tf.train.Checkpoint(generator=bmw_generator)
+# bmw_ckpt.restore("./checkpoints/bmw/ckpt-1")  
+
+# 모델 이름 모아둔 문자열 배열
+target_name_list = ["cartoon_set",  # trained for 28 epoches (with batch_size = 4) using 9996 images
+                    "panda",        # trained for 180 epoches (with batch_size = 1) using 300 images
+                    "bmw",          # trained for 19 epoches (with batch_size = 4) using 11476 images
+                    "handbag",      # trained for 5 epoches (with batch_size = 4) using 138567 images
+                    ]
+
+# 모델들을 모아둘 빈 딕셔너리 생성
+model_zoo = dict()
+
+# 각각의 모델 load
+for target_name in target_name_list:
+    model_zoo[target_name] = load_model(target_name)
 
 # 환경 변수 로드
 load_dotenv()
@@ -90,25 +104,23 @@ async def on_message(message: IncomingMessage):
         ######## 변환 코드 들어갈 부분 ########
         sketch_response = requests.get(sketch_url)
 
-        if sketch_response.status_code == 200:
+        # 성공 시 & 그러한 모델이 있을 경우
+        if sketch_response.status_code == 200 and (subject in target_name_list):
             # 이미지를 url로부터 불러와서 전처리
-            sketch = Image.open(io.BytesIO(sketch_response.content))
-            sketch = sketch.convert('L')
-            sketch = np.array(sketch)
-            sketch = np.expand_dims(sketch, axis=-1)
-            sketch = preprocess_edge(sketch)
+            sketch = load_and_preprocess_edge(sketch_response.content)
 
             # inference & post processing
-            if subject == "cartoon_set":
-                result = cartoon_set_generator(sketch)
-            elif subject == "panda":
-                result = panda_generator(sketch)
-            elif subject == "bmw":
-                result = bmw_generator(sketch)
+            sketch = model_zoo[target_name](sketch)
+            # if subject == "cartoon_set":
+            #     result = cartoon_set_generator(sketch)
+            # elif subject == "panda":
+            #     result = panda_generator(sketch)
+            # elif subject == "bmw":
+            #     result = bmw_generator(sketch)
             result = postprocess_result(result)
 
             # S3에 업로드
-            result = Image.fromarray(np.array(result).astype(np.uint8))
+            result = Image.fromarray(result)
             file = BytesIO()
             result.save(file, 'JPEG')
             file.seek(0)
@@ -155,7 +167,7 @@ async def temp():
         edge_img = preprocess_edge(edge_img)
 
         # run the generator & postprocess the result
-        result = panda_generator(edge_img)
+        result = model_zoo["bmw"](edge_img)
         result = postprocess_result(result)
 
         img = np.array(result).astype(np.uint8)
@@ -165,8 +177,6 @@ async def temp():
     end = time.time()
 
     print(f"{end - start:.5f} sec")
-
-    return f"Hello World {panda_generator._name}"
 
     return "success"
 
