@@ -80,7 +80,7 @@ async def on_message(message: IncomingMessage):
         sketch_url = data.get('sketchUrl')
         canvas_id = data.get('canvasId')
         profile_id = data.get('profileId')
-        subject = data.get('subjectName')
+        subject = data.get('modelName')
         
         # # 파일 경로 생성
         file_name = f"{subject}_{int(time.time())}"
@@ -95,7 +95,7 @@ async def on_message(message: IncomingMessage):
             sketch = load_and_preprocess_edge(sketch_response.content)
 
             # inference & post processing
-            sketch = model_zoo[target_name](sketch)
+            result = model_zoo[subject](sketch)
             result = postprocess_result(result)
 
             # S3에 업로드
