@@ -29,21 +29,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# # cartoon_set generator
-# cartoon_set_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"cartoon_set_generator")
-# cartoon_set_ckpt = tf.train.Checkpoint(generator=cartoon_set_generator)
-# cartoon_set_ckpt.restore("./checkpoints/cartoon_set/ckpt-1")  
-
-# # panda generator
-# panda_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"panda_generator")
-# panda_ckpt = tf.train.Checkpoint(generator=panda_generator)
-# panda_ckpt.restore("./checkpoints/panda/ckpt-1")  
-
-# # bmw generator
-# bmw_generator = Pix2Pix_Generator(input_channels=1, output_channels=3, name=f"bmw_generator")
-# bmw_ckpt = tf.train.Checkpoint(generator=bmw_generator)
-# bmw_ckpt.restore("./checkpoints/bmw/ckpt-1")  
-
 # 모델 이름 모아둔 문자열 배열
 target_name_list = ["cartoon_set",  # trained for 28 epoches (with batch_size = 4) using 9996 images
                     "panda",        # trained for 180 epoches (with batch_size = 1) using 300 images
@@ -111,12 +96,6 @@ async def on_message(message: IncomingMessage):
 
             # inference & post processing
             sketch = model_zoo[target_name](sketch)
-            # if subject == "cartoon_set":
-            #     result = cartoon_set_generator(sketch)
-            # elif subject == "panda":
-            #     result = panda_generator(sketch)
-            # elif subject == "bmw":
-            #     result = bmw_generator(sketch)
             result = postprocess_result(result)
 
             # S3에 업로드
@@ -131,11 +110,6 @@ async def on_message(message: IncomingMessage):
 
         ######################################
         
-        # # 여기에서 로컬 파일 '밤이.JPG'를 읽어 들입니다.
-        # with open('밤이.JPG', 'rb') as file:
-        #     # S3에 파일을 업로드합니다.
-        #     s3.upload_fileobj(file, os.getenv('AWS_BUCKET_NAME'), file_path)
-
         # 파일의 S3 URL 생성
         file_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{file_path}"
 
