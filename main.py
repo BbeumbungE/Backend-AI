@@ -32,7 +32,7 @@ app.add_middleware(
 # 모델 이름 모아둔 문자열 배열
 target_name_list = ["cartoon_set",  # trained for 28 epoches (with batch_size = 4) using 9996 images
                     "panda",        # trained for 180 epoches (with batch_size = 1) using 300 images
-                    "bmw",          # trained for 19 epoches (with batch_size = 4) using 11476 images
+                    "car",          # trained for 19 epoches (with batch_size = 4) using 11476 images
                     "handbag",      # trained for 5 epoches (with batch_size = 4) using 138567 images
                     ]
 
@@ -137,16 +137,16 @@ async def temp():
     
     for i in range(1, 7):
         # preprocess edge
-        edge_img = tf.io.decode_image(tf.io.read_file(f"./test_edges/bmw/sketch{i}.jpg"), channels=1)
+        edge_img = tf.io.decode_image(tf.io.read_file(f"./test_edges/car/sketch{i}.jpg"), channels=1)
         edge_img = preprocess_edge(edge_img)
 
         # run the generator & postprocess the result
-        result = model_zoo["bmw"](edge_img)
+        result = model_zoo["car"](edge_img)
         result = postprocess_result(result)
 
         img = np.array(result).astype(np.uint8)
         img = Image.fromarray(np.array(img))
-        img.save(f"./test_results/bmw/result{i}.jpg")
+        img.save(f"./test_results/car/result{i}.jpg")
 
     end = time.time()
 
