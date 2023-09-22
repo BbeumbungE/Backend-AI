@@ -34,6 +34,13 @@ def load_and_preprocess_edge(img_response):
     '''
 
     sketch = Image.open(io.BytesIO(img_response))
+
+    # 배경이 투명한 이미지인 경우 처리해 주자
+    if sketch.mode == "RGBA":
+        white_background = Image.new("RGB", sketch.size, (255, 255, 255))
+        white_background.paste(sketch, mask=sketch.split()[3])
+        sketch = white_background
+
     sketch = sketch.convert('L')
     sketch = np.array(sketch)
     sketch = np.expand_dims(sketch, axis=-1)

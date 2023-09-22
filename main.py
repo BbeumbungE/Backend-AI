@@ -34,6 +34,7 @@ target_name_list = ["person",       # trained for 28 epoches (with batch_size = 
                     "panda",        # trained for 180 epoches (with batch_size = 1) using 300 images
                     "car",          # trained for 19 epoches (with batch_size = 4) using 11476 images
                     "handbag",      # trained for 5 epoches (with batch_size = 4) using 138567 images
+                    "shoe",         # trained for 25 epoches (with batch_size = 4) using 49825 images
                     ]
 
 # 모델들을 모아둘 빈 딕셔너리 생성
