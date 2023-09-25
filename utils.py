@@ -34,6 +34,7 @@ def load_and_preprocess_edge(img_response):
     '''
 
     sketch = Image.open(io.BytesIO(img_response))
+    sketch = sketch.resize((256, 256))
 
     # 배경이 투명한 이미지인 경우 처리해 주자
     if sketch.mode == "RGBA":
