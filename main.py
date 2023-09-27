@@ -36,6 +36,8 @@ target_name_list = ["person",           # trained for 28 epoches (with batch_siz
                     "handbag",          # trained for 5 epoches (with batch_size = 4) using 138567 images
                     "shoe",             # trained for 25 epoches (with batch_size = 4) using 49825 images
                     "maple_character",  # trained for 14 epoches (with batch_size = 4) using 69372 images
+                    "gemstone",         # trained for roughly 36 epoches (with batch_size = 4) using 3219 images
+                    "space",            # trained for 40 epoches, (with batch_size = 4) using 4649 images
                     ]
 
 # 모델들을 모아둘 빈 딕셔너리 생성
