@@ -135,21 +135,21 @@ async def read_root():
     return {"Hello": "World"}
 
 @app.get("/temp")
-async def temp():
+async def temp(model_name: str):
     start = time.time()
     
-    for i in range(1, 7):
+    for i in range(1, len(os.listdir(f"./test_edges/{model_name}")) + 1):
         # preprocess edge
-        edge_img = tf.io.decode_image(tf.io.read_file(f"./test_edges/maple_character/sketch{i}.jpg"), channels=1)
+        edge_img = tf.io.decode_image(tf.io.read_file(f"./test_edges/{model_name}/sketch{i}.jpg"), channels=1)
         edge_img = preprocess_edge(edge_img)
 
         # run the generator & postprocess the result
-        result = model_zoo["maple_character"](edge_img)
+        result = model_zoo[model_name](edge_img)
         result = postprocess_result(result)
 
         img = np.array(result).astype(np.uint8)
         img = Image.fromarray(np.array(img))
-        img.save(f"./test_results/maple_character/result{i}.jpg")
+        img.save(f"./test_results/{model_name}/result{i}.jpg")
 
     end = time.time()
 
