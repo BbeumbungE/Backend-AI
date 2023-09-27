@@ -16,10 +16,47 @@
 
 <br>
 
+## AI 파트의 목표
+
+🚩 궁극적인 목표 : 서비스의 핵심 기능 중 하나인 그린 스케치를 해당 그림으로 변환해주는 generator 학습 <br>
+
+- 이를 달성하기 위해서 해야할 일
+  - 데이터 수집
+  - 데이터 전처리
+  - 모델 학습
+  - 모델 비교 & checkpoint 결정
+  - FastAPI 서버에 모델 띄우기
+
+<br>
+
 ## 데이터 전처리
 
+- 많은 경우에 이미지 데이터와 해당하는 edge가 함께 제공되지 않습니다.
+- 이미지 수가 많기에 이를 직접 그리는 것은 현실적으로 어려우니, pix2pix 저자들의 implementation을 참고, [HED(Holistically-Nested Edge Detection)](https://github.com/s9xie/hed)로 edge를 추출한 뒤, post-processing 작업을 거쳤습니다.
+  - [pix2pix github](https://github.com/phillipi/pix2pix)의 Extracting Edges Section을 참고해주세요
+
+<br>
+
+- 결론적으로 저렇게 이어붙여서 학습 시에 불러오게 됩니다
+- 예시 이미지 : [DVM Car Dataset](https://deepvisualmarketing.github.io/), bmw series 5
+![combined bmw](./docs%20images/combined_bmw.jpg)
+
+<br>
 
 ※ <b>Distribution Mismatch</b>
+
+- 학습을 시키는 데이터는 HED에 의해 자동으로 추출된 edge인데, 실제 사용자가 이를 따라 그리기는 현실적으로 어렵습니다.
+- 그래서 학습시키는 데이터와 궁극적으로 적용하고자 하는 데이터에 <b>distribution mismatch</b>가 발생하는데, 일반적으로 이는 실제 적용 시에서의 성능 저하를 초래할 수 있다는 점을 짚고 넘어가야 합니다.
+
+<br>
+
+- 그렇다 하더라도 저희가 궁극적으로 원하는 것은 유저가 그린 edge를 잘 변환해주는 generator이기 때문에 저희는 직접 edge를 그려서 유저가 잠재적으로 그릴 만한, 그릴 수 있는 수준의 edge를 기준으로 결과를 비교해서 모델을 선정했습니다.
+
+| HED에 의해 자동으로 추출된 edge | 직접 그려본 edge |
+| :---: | :---: |
+|![edge_hed](./docs%20images/bmw_edge_hed.jpeg)|![edge_drawn](./docs%20images/bmw_edge_drawn.jpg)|
+
+- 저자들도 마찬가지로 이를 유념하여, paper 부록에 학습 데이터에 대한 결과 뿐만 아니라, 사람이 그린 데이터에 대한 결과도 함께 첨부했습니다.
 
 <br>
 
