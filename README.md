@@ -81,3 +81,18 @@
 - 예시 결과
 ![maplestory character 예시 결과 이미지](./docs%20images/maple_character.png)
 
+### Gemstone
+- 출처 : [Kaggle, Gemstones Images](https://www.kaggle.com/datasets/lsind18/gemstones-images)
+- 데이터 수 : 3219
+- batch 사이즈 : 4
+- 학습 시킨 epoch 수 : 대략 36
+- 예시 결과
+![gemstone 예시 결과 이미지](./docs%20images/gemstone%20result.jpg)
+
+### Space
+- 출처 : [Kaggle, Cosmos Images](https://www.kaggle.com/datasets/kimbosoek/cosmos-images)
+- 데이터 수 : 4649
+- batch 사이즈 : 4
+- 학습 시킨 epoch 수 : 40
+- 예시 결과
+![space 예시 결과 이미지](./docs%20images/space%20result.jpg)
