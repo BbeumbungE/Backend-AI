@@ -63,6 +63,8 @@ s3 = client(
 RABBITMQ_URL = os.getenv('RABBITMQ_URL')
 request_queue_name = 'sketch_conversion_request_queue'
 response_queue_name = 'sketch_conversion_response_queue'
+demo_request_queue_name = 'demo_conversion_request_queue'
+demo_response_queue_name = 'demo_conversion_response_queue'
 
 connection = None
 channel = None
@@ -73,10 +75,16 @@ async def startup():
     connection = await connect(RABBITMQ_URL)
     channel = await connection.channel()
     
+    # 본 서비스
     queue = await channel.declare_queue(request_queue_name, durable=True)
     await queue.consume(on_message) 
+    
+    # 랜디 페이지
+    demo_queue = await channel.declare_queue(demo_request_queue_name, durable=True)
+    await demo_queue.consume(on_demo_message)
 
-# 메시지 처리 함수
+
+# 메시지 처리 함수 - 오리지널 서비스
 async def on_message(message: IncomingMessage):
     async with message.process():
         print("Received message: ", message.body)
@@ -130,6 +138,52 @@ async def on_message(message: IncomingMessage):
         await channel.default_exchange.publish(
             Message(body=json.dumps(response_data).encode('utf-8')),
             routing_key=response_queue_name
+        )
+
+# 데모 서비스
+async def on_demo_message(message: IncomingMessage):
+    async with message.process():
+        print("Received demo message: ", message.body)
+        data = json.loads(message.body)
+        sketch = data.get("sketchUrl")
+        subject = data.get("modelName")
+        temp_id = data.get("tempId")
+
+        # # 파일 경로 생성
+        file_name = f"{subject}_{int(time.time())}"
+        file_path = f'demo/{time.time_ns()}.JPG'
+
+        # 성공 시 & 그러한 모델이 있을 경우
+        if sketch_response.status_code == 200 and (subject in target_name_list):
+            # 이미지를 url로부터 불러와서 전처리
+            sketch = load_and_preprocess_edge(sketch_response.content)
+
+            # inference & post processing
+            result = model_zoo[subject](sketch)
+            result = postprocess_result(result)
+
+            # S3에 업로드
+            result = Image.fromarray(result)
+            file = BytesIO()
+            result.save(file, 'JPEG')
+            file.seek(0)
+            s3.upload_fileobj(file, os.getenv('AWS_BUCKET_NAME'), file_path)
+            file.close()
+        else:
+            print("Failed to retrieve the image.")
+
+        file_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{file_path}"
+
+                # 응답 생성
+        response_data = {
+            "canvasUrl": file_url,
+            "tempId": temp_id,
+            "status": "SUCCESS"
+        }
+
+        await channel.default_exchange.publish(
+            Message(body=json.dumps(response_data).encode('utf-8')),
+            routing_key=demo_response_queue_name
         )
 
 @app.get("/")
