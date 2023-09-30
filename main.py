@@ -153,7 +153,7 @@ async def on_demo_message(message: IncomingMessage):
         file_name = f"{subject}_{int(time.time())}"
         file_path = f'demo/{time.time_ns()}.JPG'
 
-        sketch_response = requests.get(sketch_url)
+        sketch_response = requests.get(sketch)
 
         # 성공 시 & 그러한 모델이 있을 경우
         if sketch_response.status_code == 200 and (subject in target_name_list):
