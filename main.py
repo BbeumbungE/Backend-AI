@@ -75,14 +75,16 @@ async def startup():
     connection = await connect(RABBITMQ_URL)
     channel = await connection.channel()
     
+    # 본 서비스
     queue = await channel.declare_queue(request_queue_name, durable=True)
     await queue.consume(on_message) 
     
+    # 랜디 페이지
     demo_queue = await channel.declare_queue(demo_request_queue_name, durable=True)
     await demo_queue.consume(on_demo_message)
 
 
-# 메시지 처리 함수
+# 메시지 처리 함수 - 오리지널 서비스
 async def on_message(message: IncomingMessage):
     async with message.process():
         print("Received message: ", message.body)
@@ -138,12 +140,14 @@ async def on_message(message: IncomingMessage):
             routing_key=response_queue_name
         )
 
+# 데모 서비스
 async def on_demo_message(message: IncomingMessage):
     async with message.process():
         print("Received demo message: ", message.body)
         data = json.loads(message.body)
         sketch = data.get("sketchUrl")
         subject = data.get("modelName")
+        temp_id = data.get("tempId")
 
         # # 파일 경로 생성
         file_name = f"{subject}_{int(time.time())}"
@@ -173,6 +177,7 @@ async def on_demo_message(message: IncomingMessage):
                 # 응답 생성
         response_data = {
             "canvasUrl": file_url,
+            "tempId": temp_id,
             "status": "SUCCESS"
         }
 
